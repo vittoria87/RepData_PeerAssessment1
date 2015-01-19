@@ -1,25 +1,77 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+Peer Assessment 1
+=================
 
+Load the data:
+```{r}
+data <- read.csv("activity.csv")
+array_sum <- tapply(data$steps, data$date, sum)
+```
 
-## Loading and preprocessing the data
+A histogram of the total number of steps taken each day:
+```{r, echo=FALSE}
+hist(array_sum)
+```
 
+The mean and median total number of steps taken per day:
+```{r}
+mean <- mean(array_sum, na.rm = TRUE)
+median <- median(array_sum, na.rm = TRUE)
+```
 
+A time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis):
+```{r, echo=FALSE}
+array_avg <- tapply(data$steps, data$interval, mean, na.rm = TRUE)
+plot(data$interval[1:length(array_avg)], array_avg, type = "l")
+```
 
-## What is mean total number of steps taken per day?
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+max_value <- rownames(which(array_avg == max(array_avg), arr.ind = TRUE))
+```
 
+The total number of missing values in the dataset (i.e. the total number of rows with NAs):
+```{r}
+missing_total <- sum(complete.cases(data) == FALSE)
+```
 
+A strategy for filling in all of the missing values in the dataset:
+I would use the mean for that 5-minute interval. 
 
-## What is the average daily activity pattern?
+Create a new dataset that is equal to the original dataset but with the missing data filled in:
+```{r}
+missed_val_pos <- which(is.na(data[,1]))
+data[missed_val_pos,1] <- mean(data$steps, na.rm = TRUE)
+```
 
+A histogram of the total number of steps taken each day:
+```{r, echo=FALSE}
+array_sum_ <- tapply(data$steps, data$date, sum)
+hist(array_sum_)
+```
 
+The mean and median total number of steps taken per day:
+```{r}
+mean_ <- mean(array_sum_, na.rm = TRUE)
+median_ <- median(array_sum_, na.rm = TRUE)
+```
 
-## Imputing missing values
+Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```{r}
+diff <- mean - mean_
+```
 
+Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day:
+```{r}
+Sys.setlocale(category = "LC_ALL", locale = "English")
+data[weekdays(as.Date(data$date), abbreviate = TRUE) %in% c("Mon", "Tue", "Wed", "Tue", "Fri"), "day_type"] <- "weekdays"
+data[weekdays(as.Date(data$date), abbreviate = TRUE) %in% c("Sat", "Sun"), "day_type"] <- "weekends"
+data$day_type <- as.factor(data$day_type)
+```
 
-
-## Are there differences in activity patterns between weekdays and weekends?
+A panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis):
+```{r, echo=FALSE}
+array_avg_ <- tapply(data$steps, list(data$interval, data$day_type), mean, na.rm = TRUE)
+par(mfrow = c(2,1))
+plot(data$interval[1:length(array_avg_)], array_avg_, type = "l")
+plot(data$interval[1:length(array_avg_)], array_avg_, type = "l")
+```
